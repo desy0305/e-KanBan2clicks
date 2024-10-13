@@ -1,0 +1,300 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Enhanced Digital Kanban System</title>
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            margin: 0;
+            padding: 20px;
+            background-color: #f0f0f0;
+        }
+        h1 {
+            text-align: center;
+            color: #333;
+        }
+        .kanban-board {
+            display: flex;
+            justify-content: space-around;
+            margin-top: 20px;
+        }
+        .column {
+            background-color: #fff;
+            border-radius: 8px;
+            padding: 15px;
+            width: 30%;
+            min-height: 400px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+        .column h2 {
+            text-align: center;
+            color: #444;
+            margin-bottom: 15px;
+        }
+        .card {
+            background-color: #f9f9f9;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            padding: 15px;
+            margin-bottom: 15px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+        .card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 6px 12px rgba(0, 0, 0, 0.1);
+        }
+        .card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 5px;
+        }
+        #full .card::before { background-color: #4CAF50; }
+        #in-use .card::before { background-color: #FFC107; }
+        #empty .card::before { background-color: #F44336; }
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+        .card-title {
+            font-weight: bold;
+            font-size: 1.1em;
+        }
+        .card-quantity {
+            background-color: #e0e0e0;
+            padding: 3px 8px;
+            border-radius: 12px;
+            font-size: 0.9em;
+        }
+        .card-details {
+            font-size: 0.9em;
+            color: #666;
+        }
+        .add-card, .filters, .user-info {
+            margin-top: 20px;
+            text-align: center;
+        }
+        input, button, select {
+            margin: 5px;
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+        button {
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+        }
+        button:hover {
+            background-color: #45a049;
+        }
+        .manage-cards-link {
+            display: inline-block;
+            margin-left: 10px;
+            padding: 8px 15px;
+            background-color: #2196F3;
+            color: white;
+            text-decoration: none;
+            border-radius: 4px;
+            transition: background-color 0.3s ease;
+        }
+        .manage-cards-link:hover {
+            background-color: #1976D2;
+        }
+    </style>
+</head>
+<body>
+    <div class="user-info">
+        <span id="username"></span>
+        <button onclick="logout()">Logout</button>
+        <a href="{{ manage_cards_url }}" class="manage-cards-link">Manage Cards</a>
+    </div>
+    <h1>Enhanced Digital Kanban System</h1>
+    <div class="filters">
+        <select id="filterSupplier" onchange="applyFilters()">
+            <option value="">All Suppliers</option>
+        </select>
+        <select id="filterLocation" onchange="applyFilters()">
+            <option value="">All Locations</option>
+        </select>
+        <select id="filterItem" onchange="applyFilters()">
+            <option value="">All Items</option>
+        </select>
+    </div>
+    <div class="kanban-board">
+        <div class="column" id="full">
+            <h2>Full</h2>
+        </div>
+        <div class="column" id="in-use">
+            <h2>In Use</h2>
+        </div>
+        <div class="column" id="empty">
+            <h2>Empty</h2>
+        </div>
+    </div>
+    <div class="add-card">
+        <input type="text" id="item" placeholder="Item">
+        <input type="number" id="quantity" placeholder="Quantity">
+        <input type="text" id="location" placeholder="Location">
+        <input type="text" id="supplier" placeholder="Supplier">
+        <button onclick="addCard()">Add Kanban Card</button>
+    </div>
+
+    <script>
+        let allCards = [];
+
+        function loadCards() {
+            fetch('/api/cards')
+                .then(response => response.json())
+                .then(cards => {
+                    allCards = cards;
+                    renderCards();
+                    updateFilters();
+                });
+        }
+
+        function renderCards() {
+            document.getElementById('full').innerHTML = '<h2>Full</h2>';
+            document.getElementById('in-use').innerHTML = '<h2>In Use</h2>';
+            document.getElementById('empty').innerHTML = '<h2>Empty</h2>';
+            allCards.forEach(card => {
+                const cardElement = createCardElement(card);
+                document.getElementById(card.status.toLowerCase().replace(' ', '-')).appendChild(cardElement);
+            });
+        }
+
+        function createCardElement(card) {
+            const cardElement = document.createElement('div');
+            cardElement.className = 'card';
+            cardElement.innerHTML = `
+                <div class="card-header">
+                    <span class="card-title">${card.item}</span>
+                    <span class="card-quantity">${card.quantity}</span>
+                </div>
+                <div class="card-details">
+                    Location: ${card.location}<br>
+                    Supplier: ${card.supplier}
+                </div>
+            `;
+            cardElement.onclick = () => moveCard(card);
+            return cardElement;
+        }
+
+        function addCard() {
+            const card = {
+                item: document.getElementById('item').value,
+                quantity: parseInt(document.getElementById('quantity').value),
+                status: 'Full',
+                location: document.getElementById('location').value,
+                supplier: document.getElementById('supplier').value
+            };
+            fetch('/api/cards', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(card),
+            })
+            .then(response => response.json())
+            .then(() => {
+                loadCards();
+                document.getElementById('item').value = '';
+                document.getElementById('quantity').value = '';
+                document.getElementById('location').value = '';
+                document.getElementById('supplier').value = '';
+            });
+        }
+
+        function moveCard(card) {
+            const newStatus = card.status === 'Full' ? 'In Use' : 
+                              card.status === 'In Use' ? 'Empty' : 'Full';
+            fetch(`/api/cards/${card.id}`, {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({status: newStatus}),
+            })
+            .then(() => loadCards());
+        }
+
+        function updateFilters() {
+            const suppliers = new Set(allCards.map(card => card.supplier));
+            const locations = new Set(allCards.map(card => card.location));
+            const items = new Set(allCards.map(card => card.item));
+            
+            const supplierFilter = document.getElementById('filterSupplier');
+            const locationFilter = document.getElementById('filterLocation');
+            const itemFilter = document.getElementById('filterItem');
+            
+            supplierFilter.innerHTML = '<option value="">All Suppliers</option>';
+            locationFilter.innerHTML = '<option value="">All Locations</option>';
+            itemFilter.innerHTML = '<option value="">All Items</option>';
+            
+            suppliers.forEach(supplier => {
+                supplierFilter.innerHTML += `<option value="${supplier}">${supplier}</option>`;
+            });
+            
+            locations.forEach(location => {
+                locationFilter.innerHTML += `<option value="${location}">${location}</option>`;
+            });
+
+            items.forEach(item => {
+                itemFilter.innerHTML += `<option value="${item}">${item}</option>`;
+            });
+        }
+
+        function applyFilters() {
+            const supplierFilter = document.getElementById('filterSupplier').value;
+            const locationFilter = document.getElementById('filterLocation').value;
+            const itemFilter = document.getElementById('filterItem').value;
+            
+            const filteredCards = allCards.filter(card => 
+                (supplierFilter === '' || card.supplier === supplierFilter) &&
+                (locationFilter === '' || card.location === locationFilter) &&
+                (itemFilter === '' || card.item === itemFilter)
+            );
+            
+            document.getElementById('full').innerHTML = '<h2>Full</h2>';
+            document.getElementById('in-use').innerHTML = '<h2>In Use</h2>';
+            document.getElementById('empty').innerHTML = '<h2>Empty</h2>';
+            
+            filteredCards.forEach(card => {
+                const cardElement = createCardElement(card);
+                document.getElementById(card.status.toLowerCase().replace(' ', '-')).appendChild(cardElement);
+            });
+        }
+
+        function logout() {
+            fetch('/logout')
+                .then(() => window.location.href = '/login');
+        }
+
+        function checkLoginStatus() {
+            fetch('/api/user')
+                .then(response => response.json())
+                .then(data => {
+                    if (data.username) {
+                        document.getElementById('username').textContent = `Logged in as: ${data.username}`;
+                        loadCards();
+                    } else {
+                        window.location.href = '/login';
+                    }
+                });
+        }
+
+        checkLoginStatus();
+    </script>
+</body>
+</html>
