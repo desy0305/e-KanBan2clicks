@@ -10,57 +10,142 @@
 7. [API Documentation](#api-documentation)
 8. [Card Management](#card-management)
 9. [Testing](#testing)
-10. [Version Control and GitHub Upload](#version-control-and-github-upload)
+10. [Version Control](#version-control)
 11. [Contributing](#contributing)
 12. [License](#license)
 
-... (keep the existing content up to the Version Control section, then replace it with the following)
+## Introduction
 
-## Version Control and GitHub Upload
+The Enhanced Digital Kanban System is a web-based application designed to manage inventory replenishment signals efficiently. It provides a visual interface for tracking the status of items across different stages of the supply chain, from full stock to empty, requiring replenishment.
 
-To upload this project to GitHub, follow these steps:
+## Features
 
-1. Install Git if you haven't already: https://git-scm.com/downloads
+- Visual Kanban Board with three-column layout (Full, In Use, Empty)
+- Color-coded cards for easy status identification
+- Filtering system by supplier, location, or item
+- Real-time updates
+- Responsive design
+- Interactive cards with click-to-move functionality
+- User authentication with organization-based separation
+- Dedicated card management page for viewing and deleting cards
 
-2. Open a terminal or command prompt in the project directory.
+## Project Structure
 
-3. Initialize a new Git repository:
+```
+enhanced-digital-kanban/
+│
+├── app.py                 # Main Flask application
+├── card_management.py     # Card management blueprint
+├── init_user.py           # Script to initialize the database and create a test user
+├── requirements.txt       # Python dependencies
+├── test_api.py            # API tests
+├── .gitignore             # Git ignore file
+├── Dockerfile             # Docker configuration file
+├── docker-compose.yml     # Docker Compose configuration file
+│
+├── templates/
+│   ├── index.html         # Main Kanban board template
+│   ├── login.html         # Login page template
+│   ├── register.html      # Registration page template
+│   └── manage_cards.html  # Card management page template
+│
+└── README.md              # Project documentation
+```
+
+## Installation
+
+### Cloning the Repository
+
+1. Clone the repository:
    ```
-   git init
+   git clone https://github.com/YOUR_USERNAME/enhanced-digital-kanban.git
+   cd enhanced-digital-kanban
    ```
 
-4. Add all files to the repository:
+### Local Installation
+
+2. Create a virtual environment and activate it:
    ```
-   git add .
+   python -m venv venv
+   source venv/bin/activate  # On Windows use `venv\Scripts\activate`
    ```
 
-5. Commit the files:
+3. Install the required packages:
    ```
-   git commit -m "Initial commit"
-   ```
-
-6. Create a new repository on GitHub:
-   - Go to https://github.com/new
-   - Choose a repository name (e.g., "enhanced-digital-kanban")
-   - Add a description (optional)
-   - Choose to make it public or private
-   - Don't initialize with a README, .gitignore, or license as we already have these files
-
-7. Link your local repository to the GitHub repository:
-   ```
-   git remote add origin https://github.com/desy0305/enhanced-digital-kanban.git
+   pip install -r requirements.txt
    ```
 
-8. Push your code to GitHub:
+4. Initialize the database and create a test user:
    ```
-   git branch -M main
-   git push -u origin main
+   python init_user.py
    ```
 
-9. Refresh your GitHub repository page, and you should see all your files there.
+## Usage
 
-After completing these steps, your project will be available on GitHub at:
-https://github.com/desy0305/enhanced-digital-kanban
+### Running Locally
+
+1. Start the Flask server:
+   ```
+   python app.py
+   ```
+
+2. Open a web browser and navigate to `http://localhost:5000`.
+
+3. Log in with the test user credentials or register a new account.
+
+4. Use the Kanban board to manage inventory items.
+
+5. Access the card management page by clicking the "Manage Cards" link.
+
+## Docker
+
+### Building and Running with Docker
+
+1. Build the Docker image:
+   ```
+   docker build -t enhanced-kanban .
+   ```
+
+2. Run the Docker container:
+   ```
+   docker run -p 5000:5000 enhanced-kanban
+   ```
+
+3. Access the application at `http://localhost:5000`
+
+### Using Docker Compose
+
+To run the application using Docker Compose:
+
+```
+docker-compose up
+```
+
+Access the application at `http://localhost:5000`
+
+## API Documentation
+
+The system provides a RESTful API for managing Kanban cards. For detailed endpoint information, refer to the [API Documentation](API_DOCUMENTATION.md).
+
+## Card Management
+
+To access the card management feature:
+1. Log in to the system
+2. Click on the "Manage Cards" link
+3. View all Kanban cards in a tabular format
+4. Delete cards using the "Delete" button next to each card
+
+## Testing
+
+Run the API tests using:
+```
+python test_api.py
+```
+
+## Version Control
+
+This project uses Git for version control. The repository is hosted on GitHub at:
+https://github.com/YOUR_USERNAME/enhanced-digital-kanban
 
 ## Contributing
 
